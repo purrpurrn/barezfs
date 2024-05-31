@@ -59,11 +59,11 @@
 
   # Enable touchpad support (enabled default in most desktopManager).
   # services.libinput.enable = true;
-
+  users.users.root.initialPassword = "password";
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.nixos = {
      isNormalUser = true;
-     password = "nixos";
+     initialPassword = "password";
      extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
      packages = with pkgs; [
        neovim
