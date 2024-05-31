@@ -12,6 +12,9 @@
       };
     };
 
+    # Swap
+    swapDevices = [{ device = "/dev/disk/by-label/SWAP"; }];
+
     services.zfs = {
       trim.enable = true;
       autoScrub.enable = true;
