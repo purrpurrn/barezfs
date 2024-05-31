@@ -16,9 +16,6 @@
       trim.enable = true;
       autoScrub.enable = true;
     };
-
-    # Swap
-    swapDevices = [{ device = "/dev/disk/by-label/SWAP"; }];
   
     # Generic ZFS + tmpfs impermanence filesystem layout
     fileSystems = {
