@@ -1,6 +1,4 @@
-{ config, pkgs, lib, inputs, ... }: {
-  options.persistence.tmpfs.enable = lib.mkEnableOption "tmpfs";
-
+{ config, pkgs, lib, ... }: {
   config = {
     boot = {
       supportedFilesystems = [ "zfs" ];
