@@ -20,11 +20,9 @@ This script will format the *entire* disk with a 1GB boot partition
 (labelled NIXBOOT), 16GB of swap, then allocating the rest to ZFS.
 
 The following ZFS datasets will be created:
-    - zroot/root (mounted at / with blank snapshot)
     - zroot/nix (mounted at /nix)
     - zroot/tmp (mounted at /tmp)
     - zroot/persist (mounted at /persist)
-    - zroot/persist/cache (mounted at /persist/cache)
 
 Introduction
 
@@ -83,19 +81,11 @@ sudo swapon "$SWAPDISK"
 echo "Creating Boot Disk"
 sudo mkfs.fat -F 32 "$BOOTDISK" -n NIXBOOT
 
-# setup encryption
-use_encryption=$(yesno "Use encryption? (Encryption must also be enabled within host config.)")
-if [[ $use_encryption == "y" ]]; then
-    encryption_options=(-O encryption=aes-256-gcm -O keyformat=passphrase -O keylocation=prompt)
-else
-    encryption_options=()
-fi
-
 echo "Creating base zpool"
 sudo zpool create -f \
     -o ashift=12 \
     -o autotrim=on \
-    -O compression=zstd \
+    -O compression=lz4 \
     -O acltype=posixacl \
     -O atime=off \
     -O xattr=sa \
@@ -103,11 +93,6 @@ sudo zpool create -f \
     -O mountpoint=none \
     "${encryption_options[@]}" \
     zroot "$ZFSDISK"
-
-echo "Creating /"
-sudo zfs create -o mountpoint=legacy zroot/root
-sudo zfs snapshot zroot/root@blank
-sudo mount -t zfs zroot/root /mnt
 
 # create the boot parition after creating root
 echo "Mounting /boot (efi)"
@@ -121,36 +106,9 @@ echo "Creating /tmp"
 sudo zfs create -o mountpoint=legacy zroot/tmp
 sudo mount --mkdir -t zfs zroot/tmp /mnt/tmp
 
-echo "Creating /cache"
-sudo zfs create -o mountpoint=legacy zroot/cache
-sudo mount --mkdir -t zfs zroot/cache /mnt/cache
-
-# handle persist, possibly from snapshot
-restore_snapshot=$(yesno "Do you want to restore from a persist snapshot?")
-if [[ $restore_snapshot == "y" ]]; then
-    echo "Enter full path to snapshot: "
-    read -r snapshot_file_path
-    echo
-
-    echo "Creating /persist"
-    # disable shellcheck (sudo doesn't affect redirects)
-    # shellcheck disable=SC2024
-    sudo zfs receive -o mountpoint=legacy zroot/persist < "$snapshot_file_path"
-
-else
-    echo "Creating /persist"
-    sudo zfs create -o mountpoint=legacy zroot/persist
-fi
+echo "Creating /persist"
+sudo zfs create -o mountpoint=legacy zroot/persist
 sudo mount --mkdir -t zfs zroot/persist /mnt/persist
 
-while true; do
-    read -rp "Which host to install? (desktop / framework / xps / vm / vm-amd) " host
-    case $host in
-        desktop|framework|xps|vm|vm-amd ) break;;
-        * ) echo "Invalid host. Please select a valid host.";;
-    esac
-done
-
-read -rp "Enter git rev for flake (default: main): " git_rev
 echo "Installing NixOS"
 sudo nixos-install --no-root-password --flake "github:purrpurrn/barezfs"
