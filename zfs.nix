@@ -1,5 +1,6 @@
 { config, pkgs, lib, ... }: {
   config = {
+    networking.hostId = "7a4e0835";
     boot = {
       supportedFilesystems = [ "zfs" ];
       initrd.availableKernelModules = [ "nvme" "xhci_pci" "usb_storage" "sd_mod" "sdhci_pci" ];
